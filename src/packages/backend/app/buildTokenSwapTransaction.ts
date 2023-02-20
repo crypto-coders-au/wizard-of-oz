@@ -1,5 +1,5 @@
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
-import { loadBobsKeypair } from "../../helpers";
+import { loadBobsKeypair } from "../../client/helpers";
 import { getAssociatedTokenAddress, createTransferInstruction } from "@solana/spl-token";
 
 const spl1Mint = new PublicKey("2w3wCoxnMn2nbsbRx2uBJ8DWXXfXazE1Twwjc1GNCc4y");
