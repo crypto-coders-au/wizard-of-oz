@@ -40,9 +40,10 @@ export default async function buildTokenSwapTransaction(options: IBuildTokenSwap
     const userTokenAddressA = await getAssociatedTokenAddress(splTokenAMint, user);
     const systemTokenAddressA = await getAssociatedTokenAddress(splTokenAMint, systemKeypair.publicKey);
 
+    // Check if the system has an associated token account for token A
     let systemTokenAccountA = await getTokenAccount(connection, systemTokenAddressA);
-
     if (systemTokenAccountA == null) {
+      // If not, create an associated token account for the system and add it to the transaction
       tx.add(
         createAssociatedTokenAccountInstruction(
           user, // payer 
@@ -68,9 +69,10 @@ export default async function buildTokenSwapTransaction(options: IBuildTokenSwap
     const userTokenAddressB = await getAssociatedTokenAddress(splTokenBMint, user);
     const systemTokenAddressB = await getAssociatedTokenAddress(splTokenBMint, systemKeypair.publicKey);
 
+    // Check if the user has an associated token account for token B
     let userTokenAccountB = await getTokenAccount(connection, userTokenAddressB);
-
     if (userTokenAccountB == null) {
+      // If not, create an associated token account for the user and add it to the transaction
       tx.add(
         createAssociatedTokenAccountInstruction(
           user, // payer 
