@@ -14,7 +14,7 @@ export interface IBuildTokenSwapTransaction {
 }
 
 /**
- * Builds a token swap transaction between the user and another party
+ * Builds a token swap transaction between the user and the system
  *
  * @param {IBuildTokenSwapTransaction} options - The options for building the transaction
  * @returns {Transaction} The built token swap transaction
@@ -38,12 +38,12 @@ export default async function buildTokenSwapTransaction(options: IBuildTokenSwap
 
     // Find the associated token accounts for token A for the user and the system
     const userTokenAccountA = await getAssociatedTokenAddress(splTokenAMint, user);
-    const otherPartyTokenAccountA = await getAssociatedTokenAddress(splTokenAMint, systemKeypair.publicKey);
+    const systemTokenAccountA = await getAssociatedTokenAddress(splTokenAMint, systemKeypair.publicKey);
 
     // Create an instruction to transfer token A from the user to the system
     const transferInstructionA = createTransferInstruction(
         userTokenAccountA, // source
-        otherPartyTokenAccountA, // destination
+        systemTokenAccountA, // destination
         user, // owner
         splTokenAAmount // amount
     );
@@ -53,11 +53,11 @@ export default async function buildTokenSwapTransaction(options: IBuildTokenSwap
 
     // Find the associated token accounts for token B for the user and the system
     const userTokenAccountB = await getAssociatedTokenAddress(splTokenBMint, user);
-    const otherPartyTokenAccountB = await getAssociatedTokenAddress(splTokenBMint, systemKeypair.publicKey);
+    const systemTokenAccountB = await getAssociatedTokenAddress(splTokenBMint, systemKeypair.publicKey);
 
     // Create an instruction to transfer token B from the system to the user
     const transferInstructionB = createTransferInstruction(
-        otherPartyTokenAccountB, // source
+        systemTokenAccountB, // source
         userTokenAccountB, // destination
         systemKeypair.publicKey, // owner
         splTokenBAmount // amount
