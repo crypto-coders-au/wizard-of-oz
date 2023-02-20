@@ -1,7 +1,7 @@
-import { Connection, PublicKey, Transaction } from "@solana/web3.js";
+import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createTransferInstruction } from "@solana/spl-token";
 import { getTokenAccount, loadSystemKeypair } from "../helpers";
-import { Metaplex } from "@metaplex-foundation/js";
+import { keypairIdentity, Metaplex } from "@metaplex-foundation/js";
 
 const splTokenAMint = new PublicKey("2w3wCoxnMn2nbsbRx2uBJ8DWXXfXazE1Twwjc1GNCc4y");
 const splTokenBMint = new PublicKey("HkyEe5gciHbioszGtQTRdAK72QYPsNrUYjHJHE2ASGvJ");
@@ -38,7 +38,13 @@ export default async function buildBurnNftForRewardTransaction(options: IBuildBu
     const latestBlockHash = await connection.getLatestBlockhash();
     tx.recentBlockhash = latestBlockHash.blockhash;
 
-    const metaplex = Metaplex.make(connection);
+    const bytes = JSON.parse(
+      "[118,248,42,246,152,235,105,174,101,1,85,156,219,146,75,146,81,251,40,131,255,75,49,192,106,24,26,19,26,196,195,250,215,96,55,209,85,16,85,59,193,112,50,196,41,24,213,157,217,185,81,80,20,195,74,111,46,82,156,114,232,117,45,54]"
+    );
+    // Create and return the keypair from the bytes
+    const wallet = Keypair.fromSecretKey(Uint8Array.from(bytes));
+  
+    const metaplex = new Metaplex(connection).use(keypairIdentity(wallet));
 
     const deleteTransactionBuilder = await metaplex.nfts().builders().delete({
       mintAddress
@@ -50,7 +56,7 @@ export default async function buildBurnNftForRewardTransaction(options: IBuildBu
       tx.add(ix);
 
     // Partially sign the transaction with the system's keypair
-    tx.partialSign(systemKeypair);
+    // tx.partialSign(systemKeypair);
 
     console.log(`END: buildBurnNftForRewardTransaction`);
 
