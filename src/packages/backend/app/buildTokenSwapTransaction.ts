@@ -23,32 +23,8 @@ export default async function buildTokenSwapTransaction(options: IBuildTokenSwap
     console.log(`BEGIN: buildTokenSwapTransaction`);
     const { connection, user } = options;
 
-    // Load the keypair for the other party involved in the swap
+    // Load the keypair for the system involved in the swap
     const systemKeypair = loadSystemKeypair();
-
-    // Find the associated token accounts for token A for the user and the other party
-    const userTokenAccountA = await getAssociatedTokenAddress(splTokenAMint, user);
-    const otherPartyTokenAccountA = await getAssociatedTokenAddress(splTokenAMint, systemKeypair.publicKey);
-
-    // Create an instruction to transfer token A from the user to the other party
-    const transferInstructionA = createTransferInstruction(
-        userTokenAccountA, // source
-        otherPartyTokenAccountA, // destination
-        user, // owner
-        splTokenAAmount // amount
-    );
-
-    // Find the associated token accounts for token B for the user and the other party
-    const userTokenAccountB = await getAssociatedTokenAddress(splTokenBMint, user);
-    const otherPartyTokenAccountB = await getAssociatedTokenAddress(splTokenBMint, systemKeypair.publicKey);
-
-    // Create an instruction to transfer token B from the other party to the user
-    const transferInstructionB = createTransferInstruction(
-        otherPartyTokenAccountB, // source
-        userTokenAccountB, // destination
-        systemKeypair.publicKey, // owner
-        splTokenBAmount // amount
-    );
 
     // Create a Transaction
     const tx = new Transaction();
@@ -60,13 +36,37 @@ export default async function buildTokenSwapTransaction(options: IBuildTokenSwap
     const latestBlockHash = await connection.getLatestBlockhash();
     tx.recentBlockhash = latestBlockHash.blockhash;
 
+    // Find the associated token accounts for token A for the user and the system
+    const userTokenAccountA = await getAssociatedTokenAddress(splTokenAMint, user);
+    const otherPartyTokenAccountA = await getAssociatedTokenAddress(splTokenAMint, systemKeypair.publicKey);
+
+    // Create an instruction to transfer token A from the user to the system
+    const transferInstructionA = createTransferInstruction(
+        userTokenAccountA, // source
+        otherPartyTokenAccountA, // destination
+        user, // owner
+        splTokenAAmount // amount
+    );
+
     // Add the transfer instruction for token A to the transaction
     tx.add(transferInstructionA);
+
+    // Find the associated token accounts for token B for the user and the system
+    const userTokenAccountB = await getAssociatedTokenAddress(splTokenBMint, user);
+    const otherPartyTokenAccountB = await getAssociatedTokenAddress(splTokenBMint, systemKeypair.publicKey);
+
+    // Create an instruction to transfer token B from the system to the user
+    const transferInstructionB = createTransferInstruction(
+        otherPartyTokenAccountB, // source
+        userTokenAccountB, // destination
+        systemKeypair.publicKey, // owner
+        splTokenBAmount // amount
+    );
 
     // Add the transfer instruction for token B to the transaction
     tx.add(transferInstructionB);
 
-    // Partially sign the transaction with the other party's keypair
+    // Partially sign the transaction with the system's keypair
     tx.partialSign(systemKeypair);
 
     console.log(`END: buildTokenSwapTransaction`);
