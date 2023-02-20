@@ -1,6 +1,6 @@
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
-import { getAssociatedTokenAddress, createTransferInstruction } from "@solana/spl-token";
-import { loadSystemKeypair } from "../helpers";
+import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createTransferInstruction } from "@solana/spl-token";
+import { getTokenAccount, loadSystemKeypair } from "../helpers";
 
 const splTokenAMint = new PublicKey("2w3wCoxnMn2nbsbRx2uBJ8DWXXfXazE1Twwjc1GNCc4y");
 const splTokenBMint = new PublicKey("HkyEe5gciHbioszGtQTRdAK72QYPsNrUYjHJHE2ASGvJ");
@@ -37,13 +37,26 @@ export default async function buildTokenSwapTransaction(options: IBuildTokenSwap
     tx.recentBlockhash = latestBlockHash.blockhash;
 
     // Find the associated token accounts for token A for the user and the system
-    const userTokenAccountA = await getAssociatedTokenAddress(splTokenAMint, user);
-    const systemTokenAccountA = await getAssociatedTokenAddress(splTokenAMint, systemKeypair.publicKey);
+    const userTokenAddressA = await getAssociatedTokenAddress(splTokenAMint, user);
+    const systemTokenAddressA = await getAssociatedTokenAddress(splTokenAMint, systemKeypair.publicKey);
+
+    let systemTokenAccountA = await getTokenAccount(connection, systemTokenAddressA);
+
+    if (systemTokenAccountA == null) {
+      tx.add(
+        createAssociatedTokenAccountInstruction(
+          user, // payer 
+          systemTokenAddressA, // address
+          systemKeypair.publicKey, // owner
+          splTokenAMint,
+        )
+      );
+    }
 
     // Create an instruction to transfer token A from the user to the system
     const transferInstructionA = createTransferInstruction(
-        userTokenAccountA, // source
-        systemTokenAccountA, // destination
+        userTokenAddressA, // source
+        systemTokenAddressA, // destination
         user, // owner
         splTokenAAmount // amount
     );
@@ -52,13 +65,26 @@ export default async function buildTokenSwapTransaction(options: IBuildTokenSwap
     tx.add(transferInstructionA);
 
     // Find the associated token accounts for token B for the user and the system
-    const userTokenAccountB = await getAssociatedTokenAddress(splTokenBMint, user);
-    const systemTokenAccountB = await getAssociatedTokenAddress(splTokenBMint, systemKeypair.publicKey);
+    const userTokenAddressB = await getAssociatedTokenAddress(splTokenBMint, user);
+    const systemTokenAddressB = await getAssociatedTokenAddress(splTokenBMint, systemKeypair.publicKey);
+
+    let userTokenAccountB = await getTokenAccount(connection, userTokenAddressB);
+
+    if (userTokenAccountB == null) {
+      tx.add(
+        createAssociatedTokenAccountInstruction(
+          user, // payer 
+          userTokenAddressB, // address
+          user, // owner
+          splTokenBMint,
+        )
+      );
+    }
 
     // Create an instruction to transfer token B from the system to the user
     const transferInstructionB = createTransferInstruction(
-        systemTokenAccountB, // source
-        userTokenAccountB, // destination
+        systemTokenAddressB, // source
+        userTokenAddressB, // destination
         systemKeypair.publicKey, // owner
         splTokenBAmount // amount
     );

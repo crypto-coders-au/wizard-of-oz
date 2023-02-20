@@ -1,4 +1,5 @@
-import { Keypair } from "@solana/web3.js";
+import { Account, getAccount } from "@solana/spl-token";
+import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 
 /**
  * Loads the keypair for the client's Solana wallet
@@ -15,4 +16,15 @@ export function loadSystemKeypair() {
     // Log a message indicating that the keypair was successfully loaded
     console.log(`Loaded client's keypair for wallet: ${keypair.publicKey}`);
     return keypair;
+}
+
+export async function getTokenAccount(connection: Connection, tokenAddress: PublicKey): Promise<Account | null> {
+    let tokenAccount;
+    try {
+        tokenAccount = await getAccount(connection, tokenAddress);
+        return tokenAccount;
+    } catch (error) {
+        console.log({ error });
+    }
+    return null;
 }
