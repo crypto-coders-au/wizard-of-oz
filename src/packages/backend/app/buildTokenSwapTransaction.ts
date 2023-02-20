@@ -1,72 +1,75 @@
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
-import { loadBobsKeypair } from "../../client/helpers";
 import { getAssociatedTokenAddress, createTransferInstruction } from "@solana/spl-token";
+import { loadSystemKeypair } from "../helpers";
 
-const spl1Mint = new PublicKey("2w3wCoxnMn2nbsbRx2uBJ8DWXXfXazE1Twwjc1GNCc4y");
-const spl2Mint = new PublicKey("HkyEe5gciHbioszGtQTRdAK72QYPsNrUYjHJHE2ASGvJ");
+const splTokenAMint = new PublicKey("2w3wCoxnMn2nbsbRx2uBJ8DWXXfXazE1Twwjc1GNCc4y");
+const splTokenBMint = new PublicKey("HkyEe5gciHbioszGtQTRdAK72QYPsNrUYjHJHE2ASGvJ");
 
-const spl1Amount = 5;
-const spl2Amount = 1;
+const splTokenAAmount = 5;
+const splTokenBAmount = 1;
 
 export interface IBuildTokenSwapTransaction {
     connection: Connection;
     user: PublicKey;
 }
 
+/**
+ * Builds a token swap transaction between the user and another party
+ *
+ * @param {IBuildTokenSwapTransaction} options - The options for building the transaction
+ * @returns {Transaction} The built token swap transaction
+ */
 export default async function buildTokenSwapTransaction(options: IBuildTokenSwapTransaction): Promise<Transaction> {
     console.log(`BEGIN: buildTokenSwapTransaction`);
     const { connection, user } = options;
 
-    const bob = loadBobsKeypair();
+    // Load the keypair for the other party involved in the swap
+    const systemKeypair = loadSystemKeypair();
 
-    // Find the token accounts for the A token for Alice and Bob
-    const aliceTokenAccountA = await getAssociatedTokenAddress(spl1Mint, user);
-    const bobTokenAccountA = await getAssociatedTokenAddress(spl1Mint, bob.publicKey);
+    // Find the associated token accounts for token A for the user and the other party
+    const userTokenAccountA = await getAssociatedTokenAddress(splTokenAMint, user);
+    const otherPartyTokenAccountA = await getAssociatedTokenAddress(splTokenAMint, systemKeypair.publicKey);
 
-    // CAVEAT - this assumes that Bob already has a token A account initisalised, we'll look at what todo if that isn't the case later
-
-    // Create an instruction to transfer 5 token A from Alice to Bob
+    // Create an instruction to transfer token A from the user to the other party
     const transferInstructionA = createTransferInstruction(
-        aliceTokenAccountA, // source
-        bobTokenAccountA, // destination
+        userTokenAccountA, // source
+        otherPartyTokenAccountA, // destination
         user, // owner
-        spl1Amount // amount
+        splTokenAAmount // amount
     );
 
-    // Find the token accounts for the B token for Alice and Bob
-    const aliceTokenAccountB = await getAssociatedTokenAddress(spl2Mint, user);
-    const bobTokenAccountB = await getAssociatedTokenAddress(spl2Mint, bob.publicKey);
+    // Find the associated token accounts for token B for the user and the other party
+    const userTokenAccountB = await getAssociatedTokenAddress(splTokenBMint, user);
+    const otherPartyTokenAccountB = await getAssociatedTokenAddress(splTokenBMint, systemKeypair.publicKey);
 
-    // CAVEAT - this assumes that Alice already has a token B account initisalised, we'll look at what todo if that isn't the case later
-
-    // Create an instruction to transfer 1 token B from Bob to Alice
+    // Create an instruction to transfer token B from the other party to the user
     const transferInstructionB = createTransferInstruction(
-        bobTokenAccountB, // source
-        aliceTokenAccountB, // destination
-        bob.publicKey, // owner
-        spl2Amount // amount
+        otherPartyTokenAccountB, // source
+        userTokenAccountB, // destination
+        systemKeypair.publicKey, // owner
+        splTokenBAmount // amount
     );
 
     // Create a Transaction
     const tx = new Transaction();
 
-    // Add the fee payer
+    // Set the user as the fee payer
     tx.feePayer = user;
 
+    // Set the recent blockhash for the transaction
     const latestBlockHash = await connection.getLatestBlockhash();
-
     tx.recentBlockhash = latestBlockHash.blockhash;
 
-    // Add the transferA instruction to transaction
+    // Add the transfer instruction for token A to the transaction
     tx.add(transferInstructionA);
 
-    // Add the transferB instruction to transaction
+    // Add the transfer instruction for token B to the transaction
     tx.add(transferInstructionB);
 
-    // Have Bob partially sign the transaction
-    tx.partialSign(bob);
+    // Partially sign the transaction with the other party's keypair
+    tx.partialSign(systemKeypair);
 
     console.log(`END: buildTokenSwapTransaction`);
-    
+
     return tx;
 }
