@@ -1,4 +1,4 @@
-import { Connection, PublicKey, Transaction } from "@solana/web3.js";
+import { Connection, PublicKey, Signer, Transaction } from "@solana/web3.js";
 import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createTransferInstruction } from "@solana/spl-token";
 import { getTokenAccount, loadSystemKeypair } from "../helpers";
 import { Metaplex } from "@metaplex-foundation/js";
@@ -41,7 +41,8 @@ export default async function buildBurnNftForRewardTransaction(options: IBuildBu
     const metaplex = Metaplex.make(connection);
 
     const deleteTransactionBuilder = await metaplex.nfts().builders().delete({
-      mintAddress
+      mintAddress,
+      owner: { publicKey: user } as Signer,
     });
   
     const burnIxs = deleteTransactionBuilder.getInstructions();
@@ -50,7 +51,7 @@ export default async function buildBurnNftForRewardTransaction(options: IBuildBu
       tx.add(ix);
 
     // Partially sign the transaction with the system's keypair
-    tx.partialSign(systemKeypair);
+    // tx.partialSign(systemKeypair);
 
     console.log(`END: buildBurnNftForRewardTransaction`);
 
