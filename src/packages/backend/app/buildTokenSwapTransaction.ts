@@ -3,7 +3,7 @@ import { loadBobsKeypair } from "../../helpers";
 import { getAssociatedTokenAddress, createTransferInstruction } from "@solana/spl-token";
 
 const spl1Mint = new PublicKey("2w3wCoxnMn2nbsbRx2uBJ8DWXXfXazE1Twwjc1GNCc4y");
-const spl2Mint = new PublicKey("2w3wCoxnMn2nbsbRx2uBJ8DWXXfXazE1Twwjc1GNCc4y");
+const spl2Mint = new PublicKey("HkyEe5gciHbioszGtQTRdAK72QYPsNrUYjHJHE2ASGvJ");
 
 const spl1Amount = 5;
 const spl2Amount = 1;

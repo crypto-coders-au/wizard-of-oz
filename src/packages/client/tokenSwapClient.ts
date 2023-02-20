@@ -1,4 +1,10 @@
-import { clusterApiUrl, Connection, sendAndConfirmTransaction, Transaction } from "@solana/web3.js";
+import {
+    BlockheightBasedTransactionConfirmationStrategy,
+    clusterApiUrl,
+    Connection,
+    sendAndConfirmTransaction,
+    Transaction
+} from "@solana/web3.js";
 import bs58 from "bs58";
 import tokenSwapMockLambda from "../backend/mockLambdas/tokenSwapMockLambda";
 import { loadAlicesKeypair } from "../helpers";
@@ -12,18 +18,37 @@ import { loadAlicesKeypair } from "../helpers";
     const encodedTokenSwapTx = await tokenSwapMockLambda({
         user: alice.publicKey
     });
-    
+
+    console.log({
+        encodedTokenSwapTx
+    });
+
     var decodedTx = bs58.decode(encodedTokenSwapTx);
-    
+
     var decodedTxBuffer = Buffer.from(decodedTx);
-    const tx =  Transaction.from(decodedTxBuffer);
-  
+    const tx = Transaction.from(decodedTxBuffer);
+
     tx.partialSign(alice);
 
-    // Sign and send the transaction
-    const signature = await sendAndConfirmTransaction(connection, tx, [], {
-        commitment: "singleGossip"
+    const rawTransaction = tx.serialize();
+
+    const signature = await connection.sendRawTransaction(rawTransaction, {
+        maxRetries: 3,
+        preflightCommitment: "finalized",
+        skipPreflight: false
     });
+
+    const latestBlockHash = await connection.getLatestBlockhash();
+
+    const confirmationStrategy: BlockheightBasedTransactionConfirmationStrategy = {
+        blockhash: latestBlockHash.blockhash,
+        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+        signature: signature
+    };
+
+    console.log("time to start confirming transaction, this may hang...");
+
+    const result = await connection.confirmTransaction(confirmationStrategy, "confirmed");
 
     console.log("Transaction confirmed:", signature);
 })();

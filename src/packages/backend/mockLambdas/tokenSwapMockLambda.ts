@@ -12,9 +12,7 @@ export default async function tokenSwapMockLambda(options: { user: PublicKey }) 
     user
   });
 
-  const response = {
-    tx: bs58.encode(tx.serialize({ requireAllSignatures: false })),
-  }
-  
-  return response;
+  const serializedTx = bs58.encode(tx.serialize({ requireAllSignatures: false }));
+
+  return serializedTx;
 }
