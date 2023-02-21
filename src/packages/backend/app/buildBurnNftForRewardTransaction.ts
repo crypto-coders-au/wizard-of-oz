@@ -24,7 +24,7 @@ export interface IBuildBurnNftForRewardTransaction {
 /**
  * Builds a nft burn for token reward transaction between the user and the system
  *
- * @param {IBuildTokenSwapTransaction} options - The options for building the transaction
+ * @param {IBuildBurnNftForRewardTransaction} options - The options for building the transaction
  * @returns {Transaction} The built nft burn for token reward transaction
  */
 export default async function buildBurnNftForRewardTransaction(

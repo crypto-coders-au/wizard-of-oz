@@ -3,7 +3,7 @@ import bs58 from "bs58";
 import buildTransferTokenUpdateNftTransaction from "../app/buildTransferTokenUpdateNftTransaction";
 
 /**
- * A mock lambda function that builds a token swap transaction for a given user and returns its encoded form
+ * A mock lambda function that builds a transfer token and update NFT transaction for a given user and returns its encoded form
  *
  * @param {object} options - The options for the function
  * @param {PublicKey} options.user - The public key of the user's Solana wallet
@@ -16,7 +16,7 @@ export default async function transferTokenUpdateNftMockLambda(options: { user: 
     // Create a connection to the Solana cluster
     const connection = new Connection(clusterApiUrl("devnet"));
 
-    // Build a token swap transaction for the user
+    // Build a transfer token and update NFT transaction for the user
     const tx: Transaction = await buildTransferTokenUpdateNftTransaction({
         connection,
         user,
