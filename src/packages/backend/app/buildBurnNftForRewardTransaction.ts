@@ -7,10 +7,11 @@ import {
 import { getTokenAccount, loadSystemKeypair } from "../helpers";
 import { Metaplex } from "@metaplex-foundation/js";
 
-const splRewardMint = new PublicKey("HkyEe5gciHbioszGtQTRdAK72QYPsNrUYjHJHE2ASGvJ");
+// Declare the reward mint and amount as constants
+const SPL_REWARD_MINT = new PublicKey("HkyEe5gciHbioszGtQTRdAK72QYPsNrUYjHJHE2ASGvJ");
+const SPL_REWARD_AMOUNT = 10;
 
-const splRewardAmount = 10;
-
+// Define the interface for the transaction options
 export interface IBuildBurnNftForRewardTransaction {
     connection: Connection;
     user: PublicKey;
@@ -18,10 +19,10 @@ export interface IBuildBurnNftForRewardTransaction {
 }
 
 /**
- * Builds a token swap transaction between the user and the system
+ * Builds a nft burn for token reward transaction between the user and the system
  *
  * @param {IBuildTokenSwapTransaction} options - The options for building the transaction
- * @returns {Transaction} The built token swap transaction
+ * @returns {Transaction} The built nft burn for token reward transaction
  */
 export default async function buildBurnNftForRewardTransaction(
     options: IBuildBurnNftForRewardTransaction
@@ -29,29 +30,27 @@ export default async function buildBurnNftForRewardTransaction(
     console.log(`BEGIN: buildBurnNftForRewardTransaction`);
     const { connection, user, mintAddress } = options;
 
-    // Load the keypair for the system involved in the swap
+    // Load the system keypair once and reuse it
     const systemKeypair = loadSystemKeypair();
 
-    // Create a Transaction
-    const tx = new Transaction();
-
-    // Set the user as the fee payer
-    tx.feePayer = user;
-
-    // Set the recent blockhash for the transaction
+    // Create the transaction with the user as the fee payer and the latest blockhash
+    const tx = new Transaction({ feePayer: user });
     const latestBlockHash = await connection.getLatestBlockhash();
     tx.recentBlockhash = latestBlockHash.blockhash;
 
+    // Use Metaplex to get the NFT for the mint address
     const metaplex = Metaplex.make(connection);
-
-    // get the nft for a mint address
     const nft = await metaplex.nfts().findByMint({ mintAddress });
 
-    if (nft.collection?.verified === false) throw Error("nft collection is unverified");
+    // Check if the NFT collection is verified and valid
+    if (!nft.collection?.verified) {
+        throw new Error("NFT collection is unverified");
+    }
+    if (nft.collection?.address.toBase58() !== "HEAKpy99JuLhfinuLgji757JxHvPizBo7WaXvWBYc3kz") {
+        throw new Error("NFT collection is not valid");
+    }
 
-    if (nft.collection?.address.toBase58() !== "HEAKpy99JuLhfinuLgji757JxHvPizBo7WaXvWBYc3kz")
-        throw Error("nft collection is not valid");
-
+    // Use Metaplex to create the delete transaction builder for the NFT
     const deleteTransactionBuilder = await metaplex
         .nfts()
         .builders()
@@ -60,37 +59,38 @@ export default async function buildBurnNftForRewardTransaction(
             owner: { publicKey: user } as Signer
         });
 
+    // Add the delete instructions to the transaction
     const burnIxs = deleteTransactionBuilder.getInstructions();
+    for (const ix of burnIxs) {
+        tx.add(ix);
+    }
 
-    for (const ix of burnIxs) tx.add(ix);
+    // Find the associated token accounts for the reward token for the user and the system
+    const userRewardTokenAddress = await getAssociatedTokenAddress(SPL_REWARD_MINT, user);
+    const systemRewardTokenAddress = await getAssociatedTokenAddress(SPL_REWARD_MINT, systemKeypair.publicKey);
 
-    // Find the associated token accounts for reward token for the user and the system
-    const userRewardTokenAddress = await getAssociatedTokenAddress(splRewardMint, user);
-    const systemRewardTokenAddress = await getAssociatedTokenAddress(splRewardMint, systemKeypair.publicKey);
-
-    // Check if the user has an associated token account for reward token
+    // Create or get the associated token account for the user
     let userRewardTokenAccount = await getTokenAccount(connection, userRewardTokenAddress);
     if (userRewardTokenAccount == null) {
-      // If not, create an associated token account for the user and add it to the transaction
-      tx.add(
-        createAssociatedTokenAccountInstruction(
-          user, // payer 
-          userRewardTokenAddress, // address
-          user, // owner
-          splRewardMint, // mint
-        )
-      );
+        tx.add(
+            createAssociatedTokenAccountInstruction(
+                user, // payer
+                userRewardTokenAddress, // address
+                user, // owner
+                SPL_REWARD_MINT // mint
+            )
+        );
     }
-    
-    // Create an instruction to transfer reward token from the system to the user
+
+    // Create an instruction to transfer the reward token from the system to the user
     const rewardInstruction = createTransferInstruction(
         systemRewardTokenAddress, // source
         userRewardTokenAddress, // destination
         systemKeypair.publicKey, // owner
-        splRewardAmount // amount
+        SPL_REWARD_AMOUNT // amount
     );
 
-    // Add the transfer instruction for token B to the transaction
+    // Add the transfer instruction for the reward token to the transaction
     tx.add(rewardInstruction);
 
     // Partially sign the transaction with the system's keypair
