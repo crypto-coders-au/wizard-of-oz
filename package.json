@@ -19,7 +19,10 @@
         "prettier": "prettier --write \"**/*.ts\" \"**/*.js\" \"**/*.json\" \"**/*.css\"",
         "prettify": "pretty-quick --staged",
         "dev": "nodemon src/index.ts",
-        "start": "ts-node src/index.ts"
+        "start": "ts-node src/index.ts",
+        "swap": "ts-node src/packages/client/tokenSwapClient.ts",
+        "burn": "ts-node src/packages/client/burnNftForRewardClient.ts",
+        "update": "ts-node src/packages/client/transferTokenUpdateNftClient.ts"
     },
     "husky": {
         "hooks": {
