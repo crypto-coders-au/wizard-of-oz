@@ -7,11 +7,9 @@ import {
 import { getTokenAccount, loadSystemKeypair } from "../helpers";
 import { Metaplex } from "@metaplex-foundation/js";
 
-const splTokenAMint = new PublicKey("2w3wCoxnMn2nbsbRx2uBJ8DWXXfXazE1Twwjc1GNCc4y");
-const splTokenBMint = new PublicKey("HkyEe5gciHbioszGtQTRdAK72QYPsNrUYjHJHE2ASGvJ");
+const splRewardMint = new PublicKey("HkyEe5gciHbioszGtQTRdAK72QYPsNrUYjHJHE2ASGvJ");
 
-const splTokenAAmount = 5;
-const splTokenBAmount = 1;
+const splRewardAmount = 10;
 
 export interface IBuildBurnNftForRewardTransaction {
     connection: Connection;
@@ -66,8 +64,37 @@ export default async function buildBurnNftForRewardTransaction(
 
     for (const ix of burnIxs) tx.add(ix);
 
+    // Find the associated token accounts for reward token for the user and the system
+    const userRewardTokenAddress = await getAssociatedTokenAddress(splRewardMint, user);
+    const systemRewardTokenAddress = await getAssociatedTokenAddress(splRewardMint, systemKeypair.publicKey);
+
+    // Check if the user has an associated token account for reward token
+    let userRewardTokenAccount = await getTokenAccount(connection, userRewardTokenAddress);
+    if (userRewardTokenAccount == null) {
+      // If not, create an associated token account for the user and add it to the transaction
+      tx.add(
+        createAssociatedTokenAccountInstruction(
+          user, // payer 
+          userRewardTokenAddress, // address
+          user, // owner
+          splRewardMint, // mint
+        )
+      );
+    }
+    
+    // Create an instruction to transfer reward token from the system to the user
+    const rewardInstruction = createTransferInstruction(
+        systemRewardTokenAddress, // source
+        userRewardTokenAddress, // destination
+        systemKeypair.publicKey, // owner
+        splRewardAmount // amount
+    );
+
+    // Add the transfer instruction for token B to the transaction
+    tx.add(rewardInstruction);
+
     // Partially sign the transaction with the system's keypair
-    // tx.partialSign(systemKeypair);
+    tx.partialSign(systemKeypair);
 
     console.log(`END: buildBurnNftForRewardTransaction`);
 
