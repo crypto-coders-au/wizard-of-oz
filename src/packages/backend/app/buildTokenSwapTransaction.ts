@@ -1,5 +1,9 @@
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
-import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createTransferInstruction } from "@solana/spl-token";
+import {
+    createAssociatedTokenAccountInstruction,
+    getAssociatedTokenAddress,
+    createTransferInstruction
+} from "@solana/spl-token";
 import { getTokenAccount, loadSystemKeypair } from "../helpers";
 
 const splTokenAMint = new PublicKey("2w3wCoxnMn2nbsbRx2uBJ8DWXXfXazE1Twwjc1GNCc4y");
@@ -43,15 +47,15 @@ export default async function buildTokenSwapTransaction(options: IBuildTokenSwap
     // Check if the system has an associated token account for token A
     let systemTokenAccountA = await getTokenAccount(connection, systemTokenAddressA);
     if (systemTokenAccountA == null) {
-      // If not, create an associated token account for the system and add it to the transaction
-      tx.add(
-        createAssociatedTokenAccountInstruction(
-          user, // payer 
-          systemTokenAddressA, // address
-          systemKeypair.publicKey, // owner
-          splTokenAMint,
-        )
-      );
+        // If not, create an associated token account for the system and add it to the transaction
+        tx.add(
+            createAssociatedTokenAccountInstruction(
+                user, // payer
+                systemTokenAddressA, // address
+                systemKeypair.publicKey, // owner
+                splTokenAMint
+            )
+        );
     }
 
     // Create an instruction to transfer token A from the user to the system
@@ -72,15 +76,15 @@ export default async function buildTokenSwapTransaction(options: IBuildTokenSwap
     // Check if the user has an associated token account for token B
     let userTokenAccountB = await getTokenAccount(connection, userTokenAddressB);
     if (userTokenAccountB == null) {
-      // If not, create an associated token account for the user and add it to the transaction
-      tx.add(
-        createAssociatedTokenAccountInstruction(
-          user, // payer 
-          userTokenAddressB, // address
-          user, // owner
-          splTokenBMint,
-        )
-      );
+        // If not, create an associated token account for the user and add it to the transaction
+        tx.add(
+            createAssociatedTokenAccountInstruction(
+                user, // payer
+                userTokenAddressB, // address
+                user, // owner
+                splTokenBMint
+            )
+        );
     }
 
     // Create an instruction to transfer token B from the system to the user

@@ -10,21 +10,21 @@ import buildTokenSwapTransaction from "../app/buildTokenSwapTransaction";
  * @returns {string} The base-58 encoded form of the token swap transaction
  */
 export default async function tokenSwapMockLambda(options: { user: PublicKey }) {
-  // Extract the user's public key from the options
-  const { user } = options;
+    // Extract the user's public key from the options
+    const { user } = options;
 
-  // Create a connection to the Solana cluster
-  const connection = new Connection(clusterApiUrl("devnet"));
+    // Create a connection to the Solana cluster
+    const connection = new Connection(clusterApiUrl("devnet"));
 
-  // Build a token swap transaction for the user
-  const tx: Transaction = await buildTokenSwapTransaction({
-    connection,
-    user
-  });
+    // Build a token swap transaction for the user
+    const tx: Transaction = await buildTokenSwapTransaction({
+        connection,
+        user
+    });
 
-  // Encode the transaction in base-58 format
-  const serializedTx = bs58.encode(tx.serialize({ requireAllSignatures: false }));
+    // Encode the transaction in base-58 format
+    const serializedTx = bs58.encode(tx.serialize({ requireAllSignatures: false }));
 
-  // Return the encoded transaction
-  return serializedTx;
+    // Return the encoded transaction
+    return serializedTx;
 }
