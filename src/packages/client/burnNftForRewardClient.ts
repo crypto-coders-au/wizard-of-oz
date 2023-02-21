@@ -9,7 +9,7 @@ import bs58 from "bs58";
 import burnNftForRewardMockLambda from "../backend/mockLambdas/burnNftForRewardMockLambda";
 import { loadClientKeypair } from "./helpers";
 
-const mintAddress = new PublicKey("759j1nMjGt8ureSsBs3yhJXAgPGovqZG7YoAxAH7gzw4");
+const mintAddress = new PublicKey("7vV6SiWW45zvBVoaKh2HLRLVGX2ujTs2ZLmrT6UyP6qw");
 
 (async () => {
     // Load the keypair for signing the transaction

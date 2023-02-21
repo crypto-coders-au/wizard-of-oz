@@ -1,5 +1,9 @@
 import { Connection, PublicKey, Signer, Transaction } from "@solana/web3.js";
-import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, createTransferInstruction } from "@solana/spl-token";
+import {
+    createAssociatedTokenAccountInstruction,
+    getAssociatedTokenAddress,
+    createTransferInstruction
+} from "@solana/spl-token";
 import { getTokenAccount, loadSystemKeypair } from "../helpers";
 import { Metaplex } from "@metaplex-foundation/js";
 
@@ -21,7 +25,9 @@ export interface IBuildBurnNftForRewardTransaction {
  * @param {IBuildTokenSwapTransaction} options - The options for building the transaction
  * @returns {Transaction} The built token swap transaction
  */
-export default async function buildBurnNftForRewardTransaction(options: IBuildBurnNftForRewardTransaction): Promise<Transaction> {
+export default async function buildBurnNftForRewardTransaction(
+    options: IBuildBurnNftForRewardTransaction
+): Promise<Transaction> {
     console.log(`BEGIN: buildBurnNftForRewardTransaction`);
     const { connection, user, mintAddress } = options;
 
@@ -40,15 +46,25 @@ export default async function buildBurnNftForRewardTransaction(options: IBuildBu
 
     const metaplex = Metaplex.make(connection);
 
-    const deleteTransactionBuilder = await metaplex.nfts().builders().delete({
-      mintAddress,
-      owner: { publicKey: user } as Signer,
-    });
-  
+    // get the nft for a mint address
+    const nft = await metaplex.nfts().findByMint({ mintAddress });
+
+    if (nft.collection?.verified === false) throw Error("nft collection is unverified");
+
+    if (nft.collection?.address.toBase58() !== "HEAKpy99JuLhfinuLgji757JxHvPizBo7WaXvWBYc3kz")
+        throw Error("nft collection is not valid");
+
+    const deleteTransactionBuilder = await metaplex
+        .nfts()
+        .builders()
+        .delete({
+            mintAddress,
+            owner: { publicKey: user } as Signer
+        });
+
     const burnIxs = deleteTransactionBuilder.getInstructions();
 
-    for ( const ix of burnIxs )
-      tx.add(ix);
+    for (const ix of burnIxs) tx.add(ix);
 
     // Partially sign the transaction with the system's keypair
     // tx.partialSign(systemKeypair);
