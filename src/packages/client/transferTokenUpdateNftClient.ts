@@ -9,7 +9,7 @@ import bs58 from "bs58";
 import transferTokenUpdateNftMockLambda from "../backend/mockLambdas/transferTokenUpdateNftMockLambda";
 import { loadClientKeypair } from "./helpers";
 
-const mintAddress = new PublicKey("8djTN99H9RCTGWmUr7bVW6SeYbiEuQEd6HRiFdBWuay");
+const mintAddress = new PublicKey("EjdRyoSkWNTRFYjHLWWc1NqQkQwKSvDfGuvcCpTHMit4");
 
 (async () => {
     // Load the keypair for signing the transaction
@@ -70,8 +70,8 @@ const mintAddress = new PublicKey("8djTN99H9RCTGWmUr7bVW6SeYbiEuQEd6HRiFdBWuay")
     console.log("Starting transaction confirmation...");
 
     // Confirm the transaction and wait for it to be finalized
-    const result = await connection.confirmTransaction(confirmationStrategy, "confirmed");
+    const result = await connection.confirmTransaction(confirmationStrategy, "finalized");
 
     // Log a message indicating that the transaction has been confirmed, along with its signature
-    console.log("Transaction confirmed:", signature);
+    console.log("Transaction finalized:", signature);
 })();
