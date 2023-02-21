@@ -1,8 +1,8 @@
 {
-    "name": "your-node-app-name",
+    "name": "wizard-of-oz-examples",
     "version": "1.0.0",
     "main": "src/index.ts",
-    "description": "Describe your app here.",
+    "description": "Wizard of Oz examples for Metaplex and other token transactions on Solana.",
     "dependencies": {
         "@metaplex-foundation/js": "^0.18.1",
         "@solana/web3.js": "^1.73.2"
@@ -17,9 +17,6 @@
     },
     "scripts": {
         "prettier": "prettier --write \"**/*.ts\" \"**/*.js\" \"**/*.json\" \"**/*.css\"",
-        "prettify": "pretty-quick --staged",
-        "dev": "nodemon src/index.ts",
-        "start": "ts-node src/index.ts",
         "swap": "ts-node src/packages/client/tokenSwapClient.ts",
         "burn": "ts-node src/packages/client/burnNftForRewardClient.ts",
         "update": "ts-node src/packages/client/transferTokenUpdateNftClient.ts"
@@ -35,6 +32,6 @@
         "typescript"
     ],
     "author": {
-        "name": "author_name"
+        "name": "crypto-coders-au"
     }
 }
