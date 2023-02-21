@@ -7,27 +7,30 @@ import {
 import { getTokenAccount, loadSystemKeypair } from "../helpers";
 import { bundlrStorage, keypairIdentity, Metaplex } from "@metaplex-foundation/js";
 
-const splTokenMint = new PublicKey("2w3wCoxnMn2nbsbRx2uBJ8DWXXfXazE1Twwjc1GNCc4y");
-
-const splTokenAmount = 5;
+// Define constants
+const SPL_TOKEN_MINT = new PublicKey("2w3wCoxnMn2nbsbRx2uBJ8DWXXfXazE1Twwjc1GNCc4y");
+const SPL_TOKEN_AMOUNT = 5;
 
 // Declare the valid collection that can be updated
 const VALID_COLLECTION = new PublicKey("HEAKpy99JuLhfinuLgji757JxHvPizBo7WaXvWBYc3kz");
 
+// Define the interface for the options parameter
 export interface IBuildTransferTokenUpdateNftTransaction {
     connection: Connection;
     user: PublicKey;
     mintAddress: PublicKey;
 }
-
 /**
- * Builds a token swap transaction between the user and the system
+ * Builds a transfer token and update NFT transaction between the user and the system
  *
- * @param {IBuildTokenSwapTransaction} options - The options for building the transaction
- * @returns {Transaction} The built token swap transaction
+ * @param {IBuildTransferTokenUpdateNftTransaction} options - The options for building the transaction
+ * @returns {Transaction} The built nft burn for token reward transaction
  */
-export default async function buildTransferTokenUpdateNftTransaction(options: IBuildTransferTokenUpdateNftTransaction): Promise<Transaction> {
-    console.log(`BEGIN: buildTokenSwapTransaction`);
+export default async function buildTransferTokenUpdateNftTransaction(
+    options: IBuildTransferTokenUpdateNftTransaction
+): Promise<Transaction> {
+    console.log(`BEGIN: buildTransferTokenUpdateNftTransaction`);
+
     const { connection, user, mintAddress } = options;
 
     // Load the keypair for the system involved in the swap
@@ -44,8 +47,8 @@ export default async function buildTransferTokenUpdateNftTransaction(options: IB
     tx.recentBlockhash = latestBlockHash.blockhash;
 
     // Find the associated token accounts for token for the user and the system
-    const userTokenAddress = await getAssociatedTokenAddress(splTokenMint, user);
-    const systemTokenAddress = await getAssociatedTokenAddress(splTokenMint, systemKeypair.publicKey);
+    const userTokenAddress = await getAssociatedTokenAddress(SPL_TOKEN_MINT, user);
+    const systemTokenAddress = await getAssociatedTokenAddress(SPL_TOKEN_MINT, systemKeypair.publicKey);
 
     // Check if the system has an associated token account for token
     let systemTokenAccount = await getTokenAccount(connection, systemTokenAddress);
@@ -56,7 +59,7 @@ export default async function buildTransferTokenUpdateNftTransaction(options: IB
                 user, // payer
                 systemTokenAddress, // address
                 systemKeypair.publicKey, // owner
-                splTokenMint
+                SPL_TOKEN_MINT
             )
         );
     }
@@ -66,57 +69,61 @@ export default async function buildTransferTokenUpdateNftTransaction(options: IB
         userTokenAddress, // source
         systemTokenAddress, // destination
         user, // owner
-        splTokenAmount // amount
+        SPL_TOKEN_AMOUNT // amount
     );
 
     // Add the transfer instruction for token A to the transaction
     tx.add(transferInstruction);
 
+    // Initialise Metaplex with the connection and the system's keypair
     const metaplex = new Metaplex(connection).use(keypairIdentity(systemKeypair));
 
-    metaplex.use(bundlrStorage({
-        address: 'https://devnet.bundlr.network',
-        providerUrl: 'https://api.devnet.solana.com',
-        timeout: 60000,
-    }));
+    // Use the Bundlr storage provider
+    metaplex.use(
+        bundlrStorage({
+            address: "https://devnet.bundlr.network",
+            providerUrl: "https://api.devnet.solana.com",
+            timeout: 60000
+        })
+    );
 
-    const nft = await metaplex.nfts().findByMint({mintAddress});
+    // Get the NFT by the mint address
+    const nft = await metaplex.nfts().findByMint({ mintAddress });
 
     // Check if the NFT collection is verified and valid
-    if (!nft.collection?.verified) {
+    if (!nft.collection) {
         throw new Error("NFT collection is unverified");
     }
     if (nft.collection?.address.toBase58() !== VALID_COLLECTION.toBase58()) {
         throw new Error("NFT collection is not valid");
     }
 
+    // Find the index of the "Counter" trait in the NFT's attributes array
     const counterTraitIndex = nft.json.attributes?.findIndex((attr) => attr.trait_type === "Counter");
 
-    if ( counterTraitIndex === -1 ) {
+    if (counterTraitIndex === -1) {
         throw new Error("Counter trait not found");
-    }     
+    }
 
-    // updating count attribute
+    // Increment the value of the "Counter" trait
     const newCount = parseInt(nft.json.attributes[counterTraitIndex].value) + 1;
 
-    console.log({newCount});
+    console.log({ newCount });
 
+    // Update the "Counter" trait in the NFT's attributes array
     nft.json.attributes[counterTraitIndex].value = newCount.toString();
 
-    // getting new URI
+    // Upload the updated metadata to get the new URI
     const { uri } = await metaplex.nfts().uploadMetadata({
-        ...nft.json,
+        ...nft.json
     });
 
     const newUri = uri;
 
-    console.log({newUri});
-    
+    console.log({ newUri });
+
     // Use Metaplex to create the update transaction builder for the NFT
-    const updateTransactionBuilder = await metaplex
-    .nfts()
-    .builders()
-    .update({
+    const updateTransactionBuilder = await metaplex.nfts().builders().update({
         nftOrSft: nft,
         uri: newUri
     });
