@@ -6,11 +6,12 @@ import {
 } from "@solana/spl-token";
 import { getTokenAccount, loadSystemKeypair } from "../helpers";
 
-const splTokenAMint = new PublicKey("2w3wCoxnMn2nbsbRx2uBJ8DWXXfXazE1Twwjc1GNCc4y");
-const splTokenBMint = new PublicKey("HkyEe5gciHbioszGtQTRdAK72QYPsNrUYjHJHE2ASGvJ");
+// Declare the token mints and amount as constants
+const SPL_TOKEN_MINT_A = new PublicKey("2w3wCoxnMn2nbsbRx2uBJ8DWXXfXazE1Twwjc1GNCc4y");
+const SPL_TOKEN_MINT_B = new PublicKey("HkyEe5gciHbioszGtQTRdAK72QYPsNrUYjHJHE2ASGvJ");
 
-const splTokenAAmount = 5;
-const splTokenBAmount = 1;
+const SPL_TOKEN_AMOUNT_A = 5;
+const SPL_TOKEN_AMOUNT_B = 1;
 
 export interface IBuildTokenSwapTransaction {
     connection: Connection;
@@ -41,8 +42,8 @@ export default async function buildTokenSwapTransaction(options: IBuildTokenSwap
     tx.recentBlockhash = latestBlockHash.blockhash;
 
     // Find the associated token accounts for token A for the user and the system
-    const userTokenAddressA = await getAssociatedTokenAddress(splTokenAMint, user);
-    const systemTokenAddressA = await getAssociatedTokenAddress(splTokenAMint, systemKeypair.publicKey);
+    const userTokenAddressA = await getAssociatedTokenAddress(SPL_TOKEN_MINT_A, user);
+    const systemTokenAddressA = await getAssociatedTokenAddress(SPL_TOKEN_MINT_A, systemKeypair.publicKey);
 
     // Check if the system has an associated token account for token A
     let systemTokenAccountA = await getTokenAccount(connection, systemTokenAddressA);
@@ -53,7 +54,7 @@ export default async function buildTokenSwapTransaction(options: IBuildTokenSwap
                 user, // payer
                 systemTokenAddressA, // address
                 systemKeypair.publicKey, // owner
-                splTokenAMint
+                SPL_TOKEN_MINT_A
             )
         );
     }
@@ -63,15 +64,15 @@ export default async function buildTokenSwapTransaction(options: IBuildTokenSwap
         userTokenAddressA, // source
         systemTokenAddressA, // destination
         user, // owner
-        splTokenAAmount // amount
+        SPL_TOKEN_AMOUNT_A // amount
     );
 
     // Add the transfer instruction for token A to the transaction
     tx.add(transferInstructionA);
 
     // Find the associated token accounts for token B for the user and the system
-    const userTokenAddressB = await getAssociatedTokenAddress(splTokenBMint, user);
-    const systemTokenAddressB = await getAssociatedTokenAddress(splTokenBMint, systemKeypair.publicKey);
+    const userTokenAddressB = await getAssociatedTokenAddress(SPL_TOKEN_MINT_B, user);
+    const systemTokenAddressB = await getAssociatedTokenAddress(SPL_TOKEN_MINT_B, systemKeypair.publicKey);
 
     // Check if the user has an associated token account for token B
     let userTokenAccountB = await getTokenAccount(connection, userTokenAddressB);
@@ -82,7 +83,7 @@ export default async function buildTokenSwapTransaction(options: IBuildTokenSwap
                 user, // payer
                 userTokenAddressB, // address
                 user, // owner
-                splTokenBMint
+                SPL_TOKEN_MINT_B
             )
         );
     }
@@ -92,7 +93,7 @@ export default async function buildTokenSwapTransaction(options: IBuildTokenSwap
         systemTokenAddressB, // source
         userTokenAddressB, // destination
         systemKeypair.publicKey, // owner
-        splTokenBAmount // amount
+        SPL_TOKEN_AMOUNT_B // amount
     );
 
     // Add the transfer instruction for token B to the transaction
