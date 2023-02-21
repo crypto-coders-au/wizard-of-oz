@@ -40,6 +40,11 @@ import { loadClientKeypair } from "./helpers";
     // Serialize the transaction to raw bytes
     const rawTransaction = tx.serialize();
 
+    /* if you we're doing this with Solana React Adapter, you'd use the following:
+    const wallet = useWallet();
+    const signature = await wallet.sendTransaction(tx, connection);
+    */
+
     // Send the raw transaction to the Solana cluster and wait for a signature
     const signature = await connection.sendRawTransaction(rawTransaction, {
         maxRetries: 3,
