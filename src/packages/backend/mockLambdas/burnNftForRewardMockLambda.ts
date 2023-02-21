@@ -4,7 +4,7 @@ import buildBurnNftForRewardTransaction from "../app/buildBurnNftForRewardTransa
 import buildTokenSwapTransaction from "../app/buildTokenSwapTransaction";
 
 /**
- * A mock lambda function that builds a token swap transaction for a given user and returns its encoded form
+ * A mock lambda function that builds a burn nft for reward transaction for a given user and returns its encoded form
  *
  * @param {object} options - The options for the function
  * @param {PublicKey} options.user - The public key of the user's Solana wallet
