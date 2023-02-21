@@ -11,6 +11,9 @@ import { Metaplex } from "@metaplex-foundation/js";
 const SPL_REWARD_MINT = new PublicKey("HkyEe5gciHbioszGtQTRdAK72QYPsNrUYjHJHE2ASGvJ");
 const SPL_REWARD_AMOUNT = 10;
 
+// Declare the valid collection that can be burned for a reward
+const VALID_COLLECTION = new PublicKey("HEAKpy99JuLhfinuLgji757JxHvPizBo7WaXvWBYc3kz");
+
 // Define the interface for the transaction options
 export interface IBuildBurnNftForRewardTransaction {
     connection: Connection;
@@ -46,7 +49,7 @@ export default async function buildBurnNftForRewardTransaction(
     if (!nft.collection?.verified) {
         throw new Error("NFT collection is unverified");
     }
-    if (nft.collection?.address.toBase58() !== "HEAKpy99JuLhfinuLgji757JxHvPizBo7WaXvWBYc3kz") {
+    if (nft.collection?.address.toBase58() !== VALID_COLLECTION.toBase58()) {
         throw new Error("NFT collection is not valid");
     }
 
